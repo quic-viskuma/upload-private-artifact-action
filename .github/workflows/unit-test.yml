@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+
+permissions:
+  security-events: read  # This is required to handle authentication for upload-private-artifact-action
+
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -21,3 +25,4 @@ jobs:
         with:
           path: ./build
           build_id: "${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
+          github_token: "${{ secrets.GITHUB_TOKEN }}"

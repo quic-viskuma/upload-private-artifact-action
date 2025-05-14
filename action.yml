@@ -5,12 +5,15 @@ inputs:
     description: "Directory containing the files to upload"
     required: true
   build_id:
-    description: "Path on fileserver to put artifacts under: ${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
+    description: "Path on fileserver to put artifacts under: github.repository - github.run_id - github.run_attempt"
+    required: true
+  github_token:
+    description: "The secrets.GITHUB_TOKEN variable in the workflow"
     required: true
   fileserver_url:
     description: "Server to use for upload"
     required: true
-    default: "https://quic-yocto-fileserver-1029608027416.us-central1.run.app'"
+    default: "https://quic-yocto-fileserver-1029608027416.us-central1.run.app"
   upload_threads:
     description: "Number of concurrent upload threads to use"
     required: true
@@ -28,7 +31,10 @@ runs:
         BUILD_DIR: ${{ inputs.path }}
         BUILD_ID: ${{ inputs.build_id}}
         FILE_SERVER: ${{ inputs.fileserver_url }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
         UPLOAD_THREADS: ${{ inputs.upload_threads }}
       shell: bash
-      run: ./publish_artifacts.py
+      run: |
+        set -ex
+        python -m pip install requests
+        python ${GITHUB_ACTION_PATH}/publish_artifacts.py

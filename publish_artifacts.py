@@ -80,7 +80,7 @@ def get_files_to_publish(path: str) -> List[str]:
 
 def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
     paths = get_files_to_publish(artifacts_dir)
-    print(f"= Found {len(paths)} files to publish", flush=True)
+    print(f"= Found {len(paths)} files to publish to {base_url}", flush=True)
 
     failed = False
     work = [(f"{base_url}{x}", artifacts_dir, x) for x in paths]
@@ -106,11 +106,11 @@ if __name__ == "__main__":
         build_dir = build_dir + "/"
 
     file_server = os.environ["FILE_SERVER"]
-    if file_server[-1] != "/":
-        file_server = file_server + "/"
+    if file_server[-1] == "/":
+        file_server = file_server[:-1]
 
     build_id = os.environ["BUILD_ID"]
-    url = f"{file_server}/${build_id}/"
+    url = f"{file_server}/{build_id}/"
 
     num_threads_str = os.environ.get("UPLOAD_THREADS", "5")
     num_threads = int(num_threads_str)
