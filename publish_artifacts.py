@@ -11,7 +11,6 @@ from typing import List
 import requests
 
 gh_token = os.environ["GITHUB_TOKEN"]
-num_threads_str = os.environ.get("UPLOAD_THREADS", "5")
 
 
 def upload_file(args):
@@ -99,13 +98,18 @@ def main(num_threads: int, artifacts_dir: str, base_url: str):
 
 
 if __name__ == "__main__":
-    BUILD_DIR = os.environ["BUILD_DIR"]
-    if BUILD_DIR[-1] != "/":
-        BUILD_DIR = BUILD_DIR + "/"
+    build_dir = os.environ["BUILD_DIR"]
+    if build_dir[-1] != "/":
+        build_dir = build_dir + "/"
 
-    URL = os.environ["URL"]
-    if URL[-1] != "/":
-        URL = URL + "/"
+    file_server = os.environ["FILE_SERVER"]
+    if file_server[-1] != "/":
+        file_server = file_server + "/"
 
+    build_id = os.environ["BUILD_ID"]
+    url = f"{file_server}/${build_id}/"
+
+    num_threads_str = os.environ.get("UPLOAD_THREADS", "5")
     num_threads = int(num_threads_str)
-    main(num_threads, BUILD_DIR, URL)
+
+    main(num_threads, build_dir, url)
