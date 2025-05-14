@@ -1,0 +1,34 @@
+name: "Upload Private Artifacts"
+description: "Uploads build artifacts that should not be available for public consumption."
+inputs:
+  path:
+    description: "Directory containing the files to upload"
+    required: true
+  build_id:
+    description: "Path on fileserver to put artifacts under: ${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
+    required: true
+  fileserver_url:
+    description: "Server to use for upload"
+    required: true
+    default: "https://quic-yocto-fileserver-1029608027416.us-central1.run.app'"
+  upload_threads:
+    description: "Number of concurrent upload threads to use"
+    required: true
+    default: "5"
+outputs:
+  url:
+    description: "URL where objects are availble at"
+    value: ${{ steps.upload.outputs.url }}
+runs:
+  using: "composite"
+  steps:
+    - name: Upload Artifacts
+      id: upload
+      env:
+        BUILD_DIR: ${{ inputs.path }}
+        BUILD_ID: ${{ inputs.build_id}}
+        FILE_SERVER: ${{ inputs.fileserver_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        UPLOAD_THREADS: ${{ inputs.upload_threads }}
+      shell: bash
+      run: ./publish_artifacts.py

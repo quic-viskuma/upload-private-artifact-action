@@ -78,7 +78,7 @@ def get_files_to_publish(path: str) -> List[str]:
     return paths
 
 
-def main(num_threads: int, artifacts_dir: str, base_url: str):
+def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
     paths = get_files_to_publish(artifacts_dir)
     print(f"= Found {len(paths)} files to publish", flush=True)
 
@@ -96,6 +96,9 @@ def main(num_threads: int, artifacts_dir: str, base_url: str):
     if failed:
         sys.exit(1)
 
+    with open(output_file, "a") as f:
+        f.write(f"build_url={base_url}")
+
 
 if __name__ == "__main__":
     build_dir = os.environ["BUILD_DIR"]
@@ -112,4 +115,6 @@ if __name__ == "__main__":
     num_threads_str = os.environ.get("UPLOAD_THREADS", "5")
     num_threads = int(num_threads_str)
 
-    main(num_threads, build_dir, url)
+    output_file = os.environ["GITHUB_OUTPUT"]
+
+    main(num_threads, build_dir, url, output_file)
