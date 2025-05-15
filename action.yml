@@ -27,7 +27,7 @@ runs:
       run: |
         set -eu
 
-        if python >/dev/null 2>&1 ; then
+        if python3 >/dev/null 2>&1 ; then
             if ! python -c "import requests" 2>/dev/null ; then
                 echo "= Python requests not found. Installing with pip"
                 python3 -m pip install requests
@@ -55,4 +55,4 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         UPLOAD_THREADS: ${{ inputs.upload_threads }}
       shell: bash
-      run: python ${GITHUB_ACTION_PATH}/publish_artifacts.py
+      run: python3 ${GITHUB_ACTION_PATH}/publish_artifacts.py
