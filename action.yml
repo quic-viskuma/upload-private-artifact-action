@@ -4,9 +4,6 @@ inputs:
   path:
     description: "Directory containing the files to upload"
     required: true
-  github_token:
-    description: "The secrets.GITHUB_TOKEN variable in the workflow"
-    required: true
   fileserver_url:
     description: "Server to use for upload"
     required: true
@@ -19,44 +16,7 @@ outputs:
   url:
     description: "URL where objects are availble at"
     value: ${{ steps.upload.outputs.url }}
+
 runs:
-  using: "composite"
-  steps:
-    - name: Setup Python
-      shell: bash
-      run: |
-        set -eu
-
-        if [ -n "$ACTIONS_RUNTIME_TOKEN" ] ; then
-          echo "ANDY we have a token???"
-        fi
-
-        if python3 >/dev/null 2>&1 ; then
-            if ! python -c "import requests" 2>/dev/null ; then
-                echo "= Python requests not found. Installing with pip"
-                python3 -m pip install requests
-            fi
-            exit 0
-        fi
-        echo "= Python not found. Installing..."
-
-        which apt >/dev/null 2>&1 || (echo "ERROR: This action requires 'apt'"; exit 1)
-
-        apt="apt"
-        if [ `id -u` -ne 0 ] ; then
-            which sudo >/dev/null 2>&1 || (echo "ERROR: This action needs 'sudo'"; exit 1)
-            apt="sudo apt"
-        fi
-
-        ${apt} update
-        ${apt} -y install python3 python3-requests
-
-    - name: Upload Artifacts
-      id: upload
-      env:
-        BUILD_DIR: ${{ inputs.path }}
-        FILE_SERVER: ${{ inputs.fileserver_url }}
-        GITHUB_TOKEN: ${{ inputs.github_token }}
-        UPLOAD_THREADS: ${{ inputs.upload_threads }}
-      shell: bash
-      run: python3 ${GITHUB_ACTION_PATH}/publish_artifacts.py
+  using: docker
+  image: Dockerfile

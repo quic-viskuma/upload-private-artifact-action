@@ -5,10 +5,8 @@ on:
     branches:
       - main
 
-
 permissions:
-  id-token: write
-  security-events: read  # This is required to handle authentication for upload-private-artifact-action
+  id-token: write  # This is required to handle authentication for upload-private-artifact-action
 
 jobs:
   unit-test:
@@ -25,4 +23,3 @@ jobs:
         uses: qualcomm-linux/upload-private-artifact-action@main
         with:
           path: ./build
-          github_token: "${{ secrets.GITHUB_TOKEN }}"

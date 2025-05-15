@@ -10,7 +10,7 @@ from typing import List
 
 import requests
 
-gh_token = os.environ["GITHUB_TOKEN"]
+gh_token = os.environ["ACTIONS_RUNTIME_TOKEN"]
 
 
 def upload_file(args):
@@ -101,11 +101,11 @@ def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
 
 
 if __name__ == "__main__":
-    build_dir = os.environ["BUILD_DIR"]
-    if build_dir[-1] != "/":
-        build_dir = build_dir + "/"
+    artifacts_dir = os.environ["INPUT_PATH"]
+    if artifacts_dir[-1] != "/":
+        artifacts_dir = artifacts_dir+ "/"
 
-    file_server = os.environ["FILE_SERVER"]
+    file_server = os.environ["INPUT_FILESERVER_URL"]
     if file_server[-1] == "/":
         file_server = file_server[:-1]
 
@@ -114,9 +114,9 @@ if __name__ == "__main__":
     run_attempt = os.environ["GITHUB_RUN_ATTEMPT"]
     url = f"{file_server}/{repo}/{run_id}-{run_attempt}/"
 
-    num_threads_str = os.environ.get("UPLOAD_THREADS", "5")
+    num_threads_str = os.environ.get("INPUT_UPLOAD_THREADS", "5")
     num_threads = int(num_threads_str)
 
     output_file = os.environ["GITHUB_OUTPUT"]
 
-    main(num_threads, build_dir, url, output_file)
+    main(num_threads, artifacts_dir, url, output_file)
