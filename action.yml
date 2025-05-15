@@ -4,9 +4,6 @@ inputs:
   path:
     description: "Directory containing the files to upload"
     required: true
-  build_id:
-    description: "Path on fileserver to put artifacts under: github.repository - github.run_id - github.run_attempt"
-    required: true
   github_token:
     description: "The secrets.GITHUB_TOKEN variable in the workflow"
     required: true
@@ -48,7 +45,6 @@ runs:
       id: upload
       env:
         BUILD_DIR: ${{ inputs.path }}
-        BUILD_ID: ${{ inputs.build_id}}
         FILE_SERVER: ${{ inputs.fileserver_url }}
         GITHUB_TOKEN: ${{ inputs.github_token }}
         UPLOAD_THREADS: ${{ inputs.upload_threads }}

@@ -109,8 +109,10 @@ if __name__ == "__main__":
     if file_server[-1] == "/":
         file_server = file_server[:-1]
 
-    build_id = os.environ["BUILD_ID"]
-    url = f"{file_server}/{build_id}/"
+    repo = os.environ["GITHUB_REPOSITORY"]
+    run_id = os.environ["GITHUB_RUN_ID"]
+    run_attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+    url = f"{file_server}/{repo}/{run_id}-{run_attempt}/"
 
     num_threads_str = os.environ.get("UPLOAD_THREADS", "5")
     num_threads = int(num_threads_str)
