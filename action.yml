@@ -15,7 +15,6 @@ inputs:
 outputs:
   url:
     description: "URL where objects are availble at"
-    value: ${{ steps.upload.outputs.url }}
 
 runs:
   using: docker

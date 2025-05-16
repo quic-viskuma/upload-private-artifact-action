@@ -97,7 +97,7 @@ def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
         sys.exit(1)
 
     with open(output_file, "a") as f:
-        f.write(f"build_url={base_url}")
+        f.write(f"url={base_url}")
 
 
 if __name__ == "__main__":

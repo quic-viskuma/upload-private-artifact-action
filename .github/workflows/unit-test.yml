@@ -20,6 +20,14 @@ jobs:
           echo 8675309 > build/test-artifact.txt
 
       - name: Upload artifacts
+        id: upload
         uses: qualcomm-linux/upload-private-artifact-action@main
         with:
           path: ./build
+
+      - name: Print URL
+        env:
+          URL: ${{ steps.upload.outputs.url }}
+        run: |
+          set -eu
+          echo "URL is ${URL}"
