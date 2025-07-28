@@ -4,10 +4,9 @@ inputs:
   path:
     description: "Directory containing the files to upload"
     required: true
-  fileserver_url:
-    description: "Server to use for upload"
+  s3_bucket:
+    description: "S3 bucket to upload to"
     required: true
-    default: "https://quic-yocto-fileserver-1029608027416.us-central1.run.app"
   upload_threads:
     description: "Number of concurrent upload threads to use"
     required: true
@@ -16,6 +15,18 @@ outputs:
   url:
     description: "URL where objects are availble at"
 
-runs:
-  using: docker
-  image: Dockerfile
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Upload artifacts
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+          INPUT_S3_BUCKET: ${{ inputs.s3_bucket }}
+          INPUT_UPLOAD_THREADS: ${{ inputs.upload_threads }}
+          GITHUB_OUTPUT: ${{ github.output }}
+
+        run: python3 ./publish_artifacts.py

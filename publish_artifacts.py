@@ -5,70 +5,29 @@
 from multiprocessing import Pool
 import os
 import sys
-from time import sleep
 from typing import List
 
-import requests
-
-gh_token = os.environ["ACTIONS_RUNTIME_TOKEN"]
-
+import subprocess
 
 def upload_file(args):
     """
-    Uploads a file to our file upload service. The service is a GCP CloudRun
-    project that returns signed URLs to Google Storage objects we can upload to.
+    Uploads a file to AWS S3 using the AWS CLI.
     """
     try:
-        url, base, name = args
-
-        headers = {
-            "Authentication": f"Bearer {gh_token}",
-        }
-
-        # Obtain the signed-url for GCS using Fibonacci backoff/retries
-        for x in (1, 2, 3, 5, 0):
-            r = requests.put(url, headers=headers, allow_redirects=False)
-            if not r.ok:
-                correlation_id = r.headers.get("X-Correlation-ID", "?")
-                if not x:
-                    return (
-                        name,
-                        f"Unable to get signed url HTTP_{r.status_code}. Correlation ID: {correlation_id} - {r.text}",
-                    )
-                else:
-                    print(
-                        f"Error getting signed URL for {name}: Correlation ID: {correlation_id} HTTP_{r.status_code} - {r.text}",
-                        flush=True,
-                    )
-                    print(f"Retrying in {x} seconds", flush=True)
-                    sleep(x)
-
-        # Upload the file to the signed URL with backoff/retry logic
-        url = r.headers["location"]
+        base, name, bucket, prefix = args
         path = os.path.join(base, name)
-        for x in (1, 2, 3, 0):
-            r = requests.put(
-                url,
-                data=open(path, "rb"),
-                headers={"Content-type": "application/octet-stream"},
-            )
-            if not r.ok:
-                if not x:
-                    return (
-                        name,
-                        f"Unable to upload content HTTP_{r.status_code} - {r.text}",
-                    )
-                else:
-                    print(
-                        f"Unable to upload content for {name}: HTTP_{r.status_code} - {r.text}"
-                    )
-                    print(f"Retrying in {x} seconds")
-                    sleep(x)
+        key = f"{prefix}/{name}"
+        s3_uri = f"s3://{bucket}/{key}"
 
+        subprocess.run(
+            ["aws", "s3", "cp", path, s3_uri],
+            check=True,
+            capture_output=True,
+            text=True
+        )
         return name, None
     except Exception as e:
-        return name, str(e)
-
+        return name, f"AWS S3 upload failed: {str(e)}"
 
 def get_files_to_publish(path: str) -> List[str]:
     paths = []
@@ -77,13 +36,17 @@ def get_files_to_publish(path: str) -> List[str]:
             paths.append(os.path.join(root, file)[len(path) :])
     return paths
 
-
-def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
+def main(num_threads: int, artifacts_dir: str, output_file: str):
     paths = get_files_to_publish(artifacts_dir)
-    print(f"= Found {len(paths)} files to publish to {base_url}", flush=True)
+    repo = os.environ["GITHUB_REPOSITORY"]
+    run_id = os.environ["GITHUB_RUN_ID"]
+    run_attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+    prefix = f"{repo}/{run_id}-{run_attempt}/"
+    bucket = os.environ["INPUT_S3_BUCKET"]
+    print(f"= Found {len(paths)} files to publish to s3://{bucket}/{prefix}", flush=True)
 
     failed = False
-    work = [(f"{base_url}{x}", artifacts_dir, x) for x in paths]
+    work = [(artifacts_dir, x, bucket, prefix) for x in paths]
     with Pool(num_threads) as p:
         results = p.imap_unordered(upload_file, work)
         for i, res in enumerate(results):
@@ -97,26 +60,16 @@ def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
         sys.exit(1)
 
     with open(output_file, "a") as f:
-        f.write(f"url={base_url}")
-
+        f.write(f"s3_prefix=s3://{bucket}/{prefix}")
 
 if __name__ == "__main__":
     artifacts_dir = os.environ["INPUT_PATH"]
     if artifacts_dir[-1] != "/":
-        artifacts_dir = artifacts_dir+ "/"
-
-    file_server = os.environ["INPUT_FILESERVER_URL"]
-    if file_server[-1] == "/":
-        file_server = file_server[:-1]
-
-    repo = os.environ["GITHUB_REPOSITORY"]
-    run_id = os.environ["GITHUB_RUN_ID"]
-    run_attempt = os.environ["GITHUB_RUN_ATTEMPT"]
-    url = f"{file_server}/{repo}/{run_id}-{run_attempt}/"
+        artifacts_dir = artifacts_dir + "/"
 
     num_threads_str = os.environ.get("INPUT_UPLOAD_THREADS", "5")
     num_threads = int(num_threads_str)
 
     output_file = os.environ["GITHUB_OUTPUT"]
 
-    main(num_threads, artifacts_dir, url, output_file)
+    main(num_threads, artifacts_dir, output_file)
