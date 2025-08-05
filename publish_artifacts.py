@@ -37,10 +37,11 @@ def upload_file(args):
                     )
                 else:
                     print(
-                        f"Error getting signed URL for {name}: Correlation ID: {correlation_id} HTTP_{r.status_code} - {r.text}",
+                        f"Error getting signed URL for {name}: Correlation ID: {correlation_id} HTTP_{r.status_code} - {r.text}\n"
+                        f"Retrying in {x} seconds",
                         flush=True,
+                        file=sys.stderr,
                     )
-                    print(f"Retrying in {x} seconds", flush=True)
                     sleep(x)
 
         # Upload the file to the signed URL with backoff/retry logic
@@ -60,9 +61,11 @@ def upload_file(args):
                     )
                 else:
                     print(
-                        f"Unable to upload content for {name}: HTTP_{r.status_code} - {r.text}"
+                        f"Unable to upload content for {name}: HTTP_{r.status_code} - {r.text}\n"
+                        f"Retrying in {x} seconds",
+                        flush=True,
+                        file=sys.stderr,
                     )
-                    print(f"Retrying in {x} seconds")
                     sleep(x)
 
         return name, None
@@ -103,7 +106,7 @@ def main(num_threads: int, artifacts_dir: str, base_url: str, output_file: str):
 if __name__ == "__main__":
     artifacts_dir = os.environ["INPUT_PATH"]
     if artifacts_dir[-1] != "/":
-        artifacts_dir = artifacts_dir+ "/"
+        artifacts_dir = artifacts_dir + "/"
 
     file_server = os.environ["INPUT_FILESERVER_URL"]
     if file_server[-1] == "/":
