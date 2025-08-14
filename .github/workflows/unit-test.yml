@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install black mypy types-requests
+          pip install black mypy types-requests types-boto3
 
       - name: Run mypy
         run: |

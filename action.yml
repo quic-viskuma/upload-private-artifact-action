@@ -1,21 +1,41 @@
-name: "Upload Private Artifacts"
-description: "Uploads build artifacts that should not be available for public consumption."
+name: "Upload Artifacts"
+description: "Uploads build artifacts to S3 bucket."
+
 inputs:
   path:
-    description: "Directory containing the files to upload"
+    description: Directory containing the files to upload
     required: true
-  fileserver_url:
-    description: "Server to use for upload"
+  destination:
+    description: Destination path in the target storage
     required: true
-    default: "https://quic-yocto-fileserver-1029608027416.us-central1.run.app"
-  upload_threads:
-    description: "Number of concurrent upload threads to use"
+  s3_bucket:
+    description: S3 bucket name
     required: true
-    default: "5"
-outputs:
-  url:
-    description: "URL where objects are availble at"
 
 runs:
-  using: docker
-  image: Dockerfile
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('${{ github.action_path }}/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install -r ${{ github.action_path }}/requirements.txt
+
+    - name: Upload artifacts
+      shell: bash
+      run: |
+        python ${{ github.action_path }}/publish_artifacts.py \
+          --path "${{ inputs.path}" \
+          --destination "${{ inputs.destination }}" \
+          --s3-bucket "${{ inputs.s3_bucket }}"
