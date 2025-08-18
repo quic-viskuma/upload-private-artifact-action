@@ -36,6 +36,6 @@ runs:
       shell: bash
       run: |
         python ${{ github.action_path }}/publish_artifacts.py \
-          --path "${{ inputs.path}" \
+          --path "${{ inputs.path }}" \
           --destination "${{ inputs.destination }}" \
           --s3-bucket "${{ inputs.s3_bucket }}"
