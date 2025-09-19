@@ -15,27 +15,26 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
-
-    - name: Cache Python dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('${{ github.action_path }}/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install dependencies
+    - name: Ensure AWS CLI is available
       shell: bash
-      run: pip install -r ${{ github.action_path }}/requirements.txt
+      run: |
+        if ! command -v aws &> /dev/null; then
+          echo "Installing AWS CLI..."
+          apt-get update && apt-get install -y awscli
+        else
+          echo "AWS CLI is already available."
+        fi
+
+    - name: Check AWS credentials
+      shell: bash
+      run: |
+        if ! aws sts get-caller-identity &> /dev/null; then
+          echo "AWS credentials are missing or invalid."
+          exit 1
+        fi
 
     - name: Upload artifacts
       shell: bash
       run: |
-        python ${{ github.action_path }}/publish_artifacts.py \
-          --path "${{ inputs.path }}" \
-          --destination "${{ inputs.destination }}" \
-          --s3-bucket "${{ inputs.s3_bucket }}"
+        aws s3 cp "${{ inputs.path }}" "s3://${{ inputs.s3_bucket }}/${{ inputs.destination }}" --recursive
+
