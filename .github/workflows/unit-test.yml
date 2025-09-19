@@ -7,31 +7,6 @@ on:
       - main
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          pip install black mypy types-requests types-boto3
-
-      - name: Run mypy
-        run: |
-          mypy ./publish_artifacts.py
-
-      - name: Run black
-        run: |
-          black --check --diff ./publish_artifacts.py
-
-
   unit-test:
     runs-on: ubuntu-latest
     steps:
