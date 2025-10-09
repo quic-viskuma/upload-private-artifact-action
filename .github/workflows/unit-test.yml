@@ -2,13 +2,15 @@ name: Unit Test
 
 on:
   pull_request:
+    branches:
+      - aws
   push:
     branches:
-      - main
+      - aws
 
 jobs:
   unit-test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, qcom-u2404, arm64]
     steps:
       - name: Create artifacts
         run: |
@@ -19,21 +21,17 @@ jobs:
 
       - name: Upload artifacts
         id: upload
-        uses: qualcomm-linux/upload-private-artifact-action@main
+        uses: qualcomm-linux/upload-private-artifact-action@aws
         with:
           path: ./build
-
-      - name: Print URL
-        env:
-          URL: ${{ steps.upload.outputs.url }}
-        run: |
-          set -eu
-          echo "URL is ${URL}"
+          s3_bucket: qcom-prd-gh-artifacts
+          destination: unit-test/${{ github.run_id }}-${{ github.run_attempt }}/
 
   unit-test-container:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, qcom-u2404, arm64]
     container:
-      image: debian:trixie
+      image: public.ecr.aws/debian/debian:trixie
+      options: --volume /home/runner/.aws:/root/.aws
     steps:
       - name: Create artifacts
         run: |
@@ -43,14 +41,8 @@ jobs:
           echo 8675309 > build/test-artifact.txt
 
       - name: Upload artifacts
-        id: upload
-        uses: qualcomm-linux/upload-private-artifact-action@main
+        uses: qualcomm-linux/upload-private-artifact-action@aws
         with:
+          s3_bucket: qcom-prd-gh-artifacts
+          destination: unit-test/${{ github.run_id }}-${{ github.run_attempt }}/
           path: ./build
-
-      - name: Print URL
-        env:
-          URL: ${{ steps.upload.outputs.url }}
-        run: |
-          set -eu
-          echo "URL is ${URL}"
